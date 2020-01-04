@@ -51,6 +51,22 @@ pip install requirements.txt
 * Install [PyCuda](https://wiki.tiker.net/PyCuda/Installation) which is a dependency of TensorRT.
 * Install [TensorRT](https://github.com/NVIDIA/TensorRT) (v5.1.5.0): a library for high performance inference on NVIDIA GPUs with [Python API](https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/index.html#python).
 
+## Docker  
+
+Building:  
+```
+docker build -t fasterseg:latest -f Dockerfile .
+```  
+
+Running:  
+```
+docker run --rm -it \
+           -v /samsung_drive:/home \
+           -p 8008:8000 \
+           fasterseg:latest
+``` 
+ 
+
 ## Usage
 * **Work flow: [pretrain the supernet](https://github.com/chenwydj/FasterSeg#11-pretrain-the-supernet) &rarr; [search the archtecture](https://github.com/chenwydj/FasterSeg#12-search-the-architecture) &rarr; [train the teacher](https://github.com/chenwydj/FasterSeg#21-train-the-teacher-network) &rarr; [train the student](https://github.com/chenwydj/FasterSeg#22-train-the-student-network-fasterseg).**
 * You can monitor the whole process in the Tensorboard.
