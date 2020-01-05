@@ -60,12 +60,30 @@ docker build -t fasterseg:latest -f Dockerfile .
 
 Running:  
 ```
-docker run --rm -it \
-           -v /samsung_drive:/home \
-           -p 8008:8000 \
-           fasterseg:latest
-``` 
- 
+nvidia-docker run --rm -it \
+                  -v /samsung_drive:/home \
+                  -p 8008:8000 \
+                  -e CITYSCAPES_DATASET='/home/FasterSeg/data'
+                  fasterseg:latest
+```  
+
+Prepare dataset:  
+```
+python ~/cityscapesScripts/cityscapesscripts/preparation/createTrainIdLabelImgs.py 
+```  
+
+Copy images lists into the dataset folder:  
+```
+cp ./tools/datasets/cityscapes/*.txt ./data/
+```  
+
+Add path to the dataset:  
+```
+vi ./search/config_search.py
+C.dataset_path = "/absolute/path/to/data"
+```  
+
+
 
 ## Usage
 * **Work flow: [pretrain the supernet](https://github.com/chenwydj/FasterSeg#11-pretrain-the-supernet) &rarr; [search the archtecture](https://github.com/chenwydj/FasterSeg#12-search-the-architecture) &rarr; [train the teacher](https://github.com/chenwydj/FasterSeg#21-train-the-teacher-network) &rarr; [train the student](https://github.com/chenwydj/FasterSeg#22-train-the-student-network-fasterseg).**

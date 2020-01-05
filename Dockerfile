@@ -1,11 +1,21 @@
 # ------------------------------------------------------------------
+# CUDA / CUDNN  9. / 7.
 # python        3.6    (apt)
-# pytorch       0.4.0  (pip)
-# opencv        4.0.1  (git)
+# pytorch       1.1.0  (pip)
+# opencv        3.4.5  (git)
 # ==================================================================
 
-FROM ubuntu:16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+
+RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-packages --no-install-recommends \
+    libcudnn7=7.0.5.15-1+cuda9.0 \
+    libcudnn7-dev=7.0.5.15-1+cuda9.0 && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV LANG C.UTF-8
+
+RUN rm -rf /etc/apt/sources.list.d/cuda.list \
+           /etc/apt/sources.list.d/nvidia-ml.list
 
 # ==================================================================
 # tools
@@ -45,10 +55,10 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
     wget -O ~/get-pip.py \
         https://bootstrap.pypa.io/get-pip.py && \
-    python3.6 ~/get-pip.py && \
-    ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
-    ln -s /usr/bin/python3.6 /usr/local/bin/python
+    python3.6 ~/get-pip.py
 
+RUN ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
+    ln -s /usr/bin/python3.6 /usr/local/bin/python
 
 RUN DEBIAN_FRONTEND=noninteractive python -m pip --no-cache-dir install --upgrade \
         setuptools \
@@ -60,7 +70,7 @@ RUN DEBIAN_FRONTEND=noninteractive python -m pip --no-cache-dir install --upgrad
         Pillow==6.2.0 \
         python-dateutil==2.7.3
 
-RUN python -m pip --no-cache-dir install --upgrade \
+RUN DEBIAN_FRONTEND=noninteractive python -m pip --no-cache-dir install --upgrade \
         scipy==1.1.0 \
         onnx==1.5.0 \
         tqdm==4.25.0 \
@@ -110,10 +120,11 @@ RUN git clone --depth 10 --branch 3.4.5 https://github.com/opencv/opencv ~/openc
 # ------------------------------------------------------------------
 
 RUN cd /tmp && \
-    curl -O "https://download.pytorch.org/whl/cpu/torch-1.1.0-cp36-cp36m-linux_x86_64.whl"  && \
+    curl -O "https://download.pytorch.org/whl/cu90/torch-1.1.0-cp36-cp36m-linux_x86_64.whl"  && \
+    curl -O "https://download.pytorch.org/whl/cu90/torchvision-0.3.0-cp36-cp36m-manylinux1_x86_64.whl" && \
     python -m pip --no-cache-dir install \
         /tmp/torch-1.1.0-cp36-cp36m-linux_x86_64.whl \
-        torchvision==0.3.0
+        /tmp/torchvision-0.3.0-cp36-cp36m-manylinux1_x86_64.whl
 
 
 RUN python -m pip --no-cache-dir install --upgrade  \
@@ -122,13 +133,35 @@ RUN python -m pip --no-cache-dir install --upgrade  \
         thop
 
 # ==================================================================
+# PyCUDA
+# https://docs.nvidia.com/deeplearning/sdk/tensorrt-archived/tensorrt-515/tensorrt-install-guide/index.html#installing-pycuda
+# ------------------------------------------------------------------
+
+RUN python -m pip --no-cache-dir install \
+        'pycuda>=2017.1.1'
+
+# ==================================================================
+# Tensor-RT v5.1.5.0
+# https://docs.nvidia.com/deeplearning/sdk/tensorrt-archived/tensorrt-515/tensorrt-install-guide/index.html
+# ------------------------------------------------------------------
+
+
+COPY ./TensorRT-5.1.5.0.Ubuntu-16.04.5.x86_64-gnu.cuda-9.0.cudnn7.5.tar.gz /
+RUN tar -xzvf TensorRT-5.1.5.0.Ubuntu-16.04.5.x86_64-gnu.cuda-9.0.cudnn7.5.tar.gz
+
+RUN echo 'export LD_LIBRARY_PATH=/TensorRT-5.1.5.0/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+RUN /bin/bash -c "source ~/.bashrc" && \
+    cd /TensorRT-5.1.5.0/python && \
+    python -m pip install tensorrt-5.1.5.0-cp36-none-linux_x86_64.whl
+ 
+# ==================================================================
 # config & cleanup
 # ------------------------------------------------------------------
 
 RUN ldconfig && \
     apt-get clean && \
     apt-get autoremove && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/*
+    rm -rf /var/lib/apt/lists/* /tmp/*
 
 WORKDIR /home/FasterSeg
 EXPOSE 8000 6006
