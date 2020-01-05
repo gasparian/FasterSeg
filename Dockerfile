@@ -74,9 +74,7 @@ RUN DEBIAN_FRONTEND=noninteractive python -m pip --no-cache-dir install --upgrad
         scipy==1.1.0 \
         onnx==1.5.0 \
         tqdm==4.25.0 \
-        # scikit-learn \
         Cython \
-        # opencv-python==3.4.4.19 \
         matplotlib==3.0.0
 
 # ==================================================================
