@@ -63,6 +63,7 @@ Running:
 nvidia-docker run --rm -it \
                   -v /samsung_drive:/home \
                   -p 8008:8000 \
+                  --shm-size 8G
                   -e CITYSCAPES_DATASET='/home/FasterSeg/data'
                   fasterseg:latest
 ```  
