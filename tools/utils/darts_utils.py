@@ -184,9 +184,10 @@ def compute_latency_ms_pytorch(model, input_size, iterations=None, device=None):
     torch.backends.cudnn.benchmark = True
 
     model.eval()
-    model = model.cuda()
-
-    input = torch.randn(*input_size).cuda()
+    input = torch.randn(*input_size)
+    if torch.cuda.is_available(): 
+        model = model.cuda()
+        input = input.cuda()
 
     with torch.no_grad():
         for _ in range(10):
@@ -196,29 +197,34 @@ def compute_latency_ms_pytorch(model, input_size, iterations=None, device=None):
             elapsed_time = 0
             iterations = 100
             while elapsed_time < 1:
-                torch.cuda.synchronize()
-                torch.cuda.synchronize()
+                if torch.cuda.is_available(): 
+                    torch.cuda.synchronize()
+                    torch.cuda.synchronize()
                 t_start = time.time()
                 for _ in range(iterations):
                     model(input)
-                torch.cuda.synchronize()
-                torch.cuda.synchronize()
+                if torch.cuda.is_available(): 
+                    torch.cuda.synchronize()
+                    torch.cuda.synchronize()
                 elapsed_time = time.time() - t_start
                 iterations *= 2
             FPS = iterations / elapsed_time
             iterations = int(FPS * 6)
 
         print('=========Speed Testing=========')
-        torch.cuda.synchronize()
-        torch.cuda.synchronize()
+        if torch.cuda.is_available(): 
+            torch.cuda.synchronize()
+            torch.cuda.synchronize()
         t_start = time.time()
         for _ in tqdm(range(iterations)):
             model(input)
-        torch.cuda.synchronize()
-        torch.cuda.synchronize()
+        if torch.cuda.is_available(): 
+            torch.cuda.synchronize()
+            torch.cuda.synchronize()
         elapsed_time = time.time() - t_start
-        latency = elapsed_time / iterations * 1000
-    torch.cuda.empty_cache()
+        latency = elapsed_time / iterations * 1000 
+    if torch.cuda.is_available(): 
+        torch.cuda.empty_cache()
     # FPS = 1000 / latency (in ms)
     return latency
 

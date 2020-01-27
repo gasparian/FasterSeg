@@ -4,6 +4,7 @@
 *.pth
 # json
 *.json
+*.onnx
 
 # Mkdocs
 # /docs/
@@ -15,6 +16,7 @@
 .pytest_cache
 /experiments
 node_modules/
+latency/latency*
 
 search-*/
 eval-*/

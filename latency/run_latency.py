@@ -11,12 +11,17 @@ import numpy as np
 from thop import profile
 
 from config import config
+cuda_available = torch.cuda.is_available()
 config.save = 'latency-{}-{}'.format(config.save, time.strftime("%Y%m%d-%H%M%S"))
 
 from utils.darts_utils import create_exp_dir, plot_op, plot_path_width, objective_acc_lat
 try:
-    from utils.darts_utils import compute_latency_ms_tensorrt as compute_latency
-    print("use TensorRT for latency test")
+    if cuda_available:
+        from utils.darts_utils import compute_latency_ms_tensorrt as compute_latency
+        print("use TensorRT for latency test")
+    else: 
+        from utils.darts_utils import compute_latency_ms_pytorch as compute_latency
+        print("use PyTorch for latency test")
 except:
     from utils.darts_utils import compute_latency_ms_pytorch as compute_latency
     print("use PyTorch for latency test")
@@ -40,16 +45,19 @@ def main():
     seed = config.seed
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
+    map_loc = 'cpu' 
+    if cuda_available:
         torch.cuda.manual_seed(seed)
+        map_loc = None
 
     # Model #######################################
     lasts = []
     for idx, arch_idx in enumerate(config.arch_idx):
         if config.load_epoch == "last":
-            state = torch.load(os.path.join(config.load_path, "arch_%d.pt"%arch_idx))
+            state = torch.load(os.path.join(config.load_path, "arch_%d.pt"%arch_idx),
+                               map_location=map_loc)
         else:
-            state = torch.load(os.path.join(config.load_path, "arch_%d_%d.pt"%(arch_idx, int(config.load_epoch))))
+            state = torch.load(os.path.join(config.load_path, "arch_%d_%d.pt"%(arch_idx, int(config.load_epoch))),  map_location=map_loc)
 
         model = Network(
             [state["alpha_%d_0"%arch_idx].detach(), state["alpha_%d_1"%arch_idx].detach(), state["alpha_%d_2"%arch_idx].detach()],
@@ -75,7 +83,8 @@ def main():
         logging.info("params = %fMB, FLOPs = %fGB", params / 1e6, flops / 1e9)
         logging.info("ops:" + str(model.ops))
         logging.info("path:" + str(model.paths))
-        model = model.cuda()
+        if cuda_available:
+            model = model.cuda()
         #####################################################
         print(config.save)
         latency = compute_latency(model, (1, 3, config.image_height, config.image_width))

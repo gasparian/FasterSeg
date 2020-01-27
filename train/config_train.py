@@ -75,7 +75,7 @@ C.eval_width = 2048
 
 C.layers = 16
 """ Train Config """
-C.mode = "teacher" # "teacher" or "student"
+C.mode = "student" # "teacher" or "student"
 if C.mode == "teacher":
     ##### train teacher model only ####################################
     C.arch_idx = [0] # 0 for teacher
@@ -95,8 +95,8 @@ elif C.mode == "student":
     C.branch = [2, 2]
     C.width_mult_list = [4./12, 6./12, 8./12, 10./12, 1.,]
     C.stem_head_width = [(1, 1), (8./12, 8./12),]
-    C.load_path = "fasterseg" # path to the searched directory
-    C.teacher_path = "fasterseg" # where to load the pretrained teacher's weight
+    C.load_path = "search-224x448_F12.L16_batch2-20200107-110305" # path to the searched directory
+    C.teacher_path = "train-512x1024_teacher_batch12-20200109-101052" # where to load the pretrained teacher's weight
     C.load_epoch = "last" # "last" or "int" (e.g. "30")
     C.batch_size = 12
     C.Fch = 12
@@ -106,5 +106,5 @@ elif C.mode == "student":
 
 ########################################
 C.is_test = False # if True, prediction files for the test set will be generated
-C.is_eval = False # if True, the train.py will only do evaluation for once
-C.eval_path = "fasterseg" # path to pretrained directory to be evaluated
+C.is_eval = True # if True, the train.py will only do evaluation for once
+C.eval_path = "train-512x1024_student_batch12-20200116-181925" # path to pretrained directory to be evaluated
